@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="1dp"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.coder.who.MainActivity"
+    tools:showIn="@layout/app_bar_main">
+
+    <!--目前三个列表卡片，分别是相册，相机，摄像头获取人脸-->
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+    </android.support.v7.widget.RecyclerView>
+
+
+</RelativeLayout>
