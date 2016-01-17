@@ -1,33 +1,55 @@
 package com.coder.who;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.graphics.Palette;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
+import android.widget.ImageView;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
 public class FaceRecognitionActivity extends AppCompatActivity {
 
+    private ImageView imageView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_face_recognition);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        imageView = (ImageView) findViewById(R.id.profile_image);
+
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.htab_toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle("Result");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        final CollapsingToolbarLayout collapsingToolbarLayout = (CollapsingToolbarLayout) findViewById(R.id.htab_collapse_toolbar);
+        collapsingToolbarLayout.setTitleEnabled(false);
+
+        ImageView header = (ImageView) findViewById(R.id.htab_header);
+
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(),
+                R.drawable.header);
+
+        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+            @SuppressWarnings("ResourceType")
             @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+            public void onGenerated(Palette palette) {
+
+                int vibrantColor = palette.getVibrantColor(R.color.primary_500);
+                int vibrantDarkColor = palette.getDarkVibrantColor(R.color.primary_700);
+                collapsingToolbarLayout.setContentScrimColor(vibrantColor);
+                collapsingToolbarLayout.setStatusBarScrimColor(vibrantDarkColor);
             }
         });
+
+
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         /**
@@ -57,6 +79,9 @@ public class FaceRecognitionActivity extends AppCompatActivity {
                 sDialog.setTitleText("识别成功");
                 sDialog.setContentText("请勿泄露对方隐私");
                 sDialog.show();
+
+                imageView.setImageResource(R.drawable.tx);
+
             }
         }, 3000);
 
