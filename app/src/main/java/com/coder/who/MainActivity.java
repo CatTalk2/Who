@@ -18,13 +18,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -41,6 +42,19 @@ public class MainActivity extends AppCompatActivity
     private final int PHOTO_REQUEST_CAMERA = 1;
     private final int PHOTO_REQUEST_VIDEO = 2;
     private final String IMAGE_FILE_LOCATION = "file:///sdcard/temp.jpg";
+
+
+    private static final String JPEG_FILE_PREFIX = "IMG_";
+    private static final String JPEG_FILE_SUFFIX = ".jpg";
+
+    private static final String CAMERA_DIR = "/dcim/";
+    private static final String albumName ="CameraSample";
+
+    //获得ImageView的width height
+    private int targetW = 200;
+    private int targetH = 300;
+
+    private File photoFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +96,63 @@ public class MainActivity extends AppCompatActivity
         itemList.setAdapter(adapter);
         adapter.setOnItemClickListener(this);
 
+        try {
+            photoFile = createFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
+
+    //获得文件路径,这里以public为例
+
+    private File getPhotoDir(){
+        File storDirPrivate = null;
+        File storDirPublic = null;
+
+        if(Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())){
+
+            //private,只有本应用可访问
+            storDirPrivate = new File (
+                    Environment.getExternalStorageDirectory()
+                            + CAMERA_DIR
+                            + albumName
+            );
+
+            //public 所有应用均可访问
+            storDirPublic = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                    albumName);
+
+            if (storDirPublic != null) {
+                if (! storDirPublic.mkdirs()) {
+                    if (! storDirPublic.exists()){
+                        Log.d("CameraSample", "failed to create directory");
+                        return null;
+                    }
+                }
+            }
+        }else {
+            Log.v(getString(R.string.app_name), "External storage is not mounted READ/WRITE.");
+        }
+
+        return storDirPublic;//或者return storDirPrivate;
+
+    }
+
+    private File createFile() throws IOException {
+        photoFile = null;
+
+        String fileName;
+        //通过时间戳区别文件名
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        fileName = JPEG_FILE_PREFIX+timeStamp+"_";
+
+        photoFile = File.createTempFile(fileName,JPEG_FILE_SUFFIX,getPhotoDir());
+
+        return photoFile;
+    }
+
+
 
     @Override
     public void onItemClick(View view, int pos) {
@@ -106,17 +176,10 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void camera() {
-        // 激活相机
-        String state = Environment.getExternalStorageState(); //拿到sdcard是否可用的状态码
-        if (state.equals(Environment.MEDIA_MOUNTED)){   //如果可用
-            Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-            SimpleDateFormat t = new SimpleDateFormat("yyyyMMddssSSS");
-            String filePath =   "MT" + (t.format(new Date())) + ".jpg";
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(new File(filePath)));
-            startActivityForResult(intent,PHOTO_REQUEST_CAMERA);
-        }else {
-            Toast.makeText(MainActivity.this,"sdcard不可用",Toast.LENGTH_SHORT).show();
-        }
+        //传入File的uri
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(photoFile));
+        startActivityForResult(takePictureIntent,PHOTO_REQUEST_CAMERA);
     }
     private void gallery() {
         Intent intent = new Intent(Intent.ACTION_PICK);
@@ -147,60 +210,15 @@ public class MainActivity extends AppCompatActivity
             //bitmap=BitmapFactory.decodeFile(picturePath);
             imageUri = picturePath;
 
+            System.out.println("MainActivity"+"imageUri "+imageUri);
+
         }
         if (requestCode == PHOTO_REQUEST_CAMERA && resultCode == RESULT_OK && null != data) {
             // Toast.makeText(MainActivity.this,"xuanqudaole ",Toast.LENGTH_SHORT).show();
             //两种方式 获取拍好的图片
-            Bitmap bitmap = null;
-            if (data.getData() != null || data.getExtras() != null) { //防止没有返回结果
-                Uri uri = data.getData();
-                if (uri != null) {
-                    //bitmap = BitmapFactory.decodeFile(uri.getPath()); //拿到图片
-                    imageUri = uri.getPath();
-                    bitmap = BitmapFactory.decodeFile(uri.getPath()); //拿到图片
-                }
-                if (bitmap == null) {
-                    Bundle bundle = data.getExtras();
-                    if (bundle != null) {
-                       bitmap = (Bitmap) bundle.get("data");
-                        //imageUri = bundle.get("data").toString();
-                    } else {
-                        Toast.makeText(getApplicationContext(), "找不到图片", Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-
-            FileOutputStream fileOutputStream = null;
-            try {
-                // 获取 SD 卡根目录
-                String saveDir = Environment.getExternalStorageDirectory() + "/meitian_photos";
-                // 新建目录
-                File dir = new File(saveDir);
-                if (! dir.exists()) dir.mkdir();
-                // 生成文件名
-                SimpleDateFormat t = new SimpleDateFormat("yyyyMMddssSSS");
-                String filename = "MT" + (t.format(new Date())) + ".jpg";
-                // 新建文件
-                File file = new File(saveDir, filename);
-                // 打开文件输出流
-                fileOutputStream = new FileOutputStream(file);
-                // 生成图片文件
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fileOutputStream);
-                // 相片的完整路径
-               imageUri = file.getPath();
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (fileOutputStream != null) {
-                    try {
-                        fileOutputStream.close();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-
+            setPic();
+            galleryAddPic();
+            imageUri = photoFile.getPath();
         }
 
         if (requestCode == PHOTO_REQUEST_VIDEO && resultCode == RESULT_OK && null != data) {
@@ -215,6 +233,42 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    private void setPic() {
+
+        //获得图像的尺寸
+        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+        bmOptions.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(photoFile.getAbsolutePath(),bmOptions);
+
+        int photoW = bmOptions.outWidth;
+        int photoH =bmOptions.outHeight;
+
+        //计算缩放
+        int scaleFactor = 1;
+        if((targetW>0)||(targetH>0)){
+            scaleFactor = Math.min(photoW/targetW,photoH/targetH);
+        }
+
+        //将保存的文件解码
+        bmOptions.inJustDecodeBounds = false;
+        bmOptions.inSampleSize = scaleFactor;
+        bmOptions.inPurgeable = true;
+
+
+        Bitmap bitmap = BitmapFactory.decodeFile(photoFile.getAbsolutePath(), bmOptions);
+        Log.i("MainActivity","imageUri "+photoFile.getAbsolutePath());
+        System.out.println("MainActivity"+"photoFile "+photoFile.getAbsolutePath());
+
+    }
+
+
+    //将图片文件添加至相册（便于浏览）
+    private void galleryAddPic() {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        Uri contentUri = Uri.fromFile(photoFile);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
 
 
     private void initItemData() {

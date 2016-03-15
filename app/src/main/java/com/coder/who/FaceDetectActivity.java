@@ -8,11 +8,16 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 
+import org.opencv.android.CameraBridgeViewBase;
+import org.opencv.core.Mat;
+
 import cn.pedant.SweetAlert.SweetAlertDialog;
 
-public class FaceDetectActivity extends AppCompatActivity {
+public class FaceDetectActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener{
 
     private FaceOverlayView faceOverlayView;
+    private static final int DETECT_SUCESS = 1;
+    private static final int DETECT_FAIL = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +42,12 @@ public class FaceDetectActivity extends AppCompatActivity {
          *
          * String[] faceImage存储预处理好的人脸图片
          */
+
+        //2016.02.21 暂时处理照片中只有一张人脸
+
+
+
+
 
 //       if(Detect_Sucess){
 //
@@ -93,5 +104,38 @@ public class FaceDetectActivity extends AppCompatActivity {
 
 
 
+    }
+
+    /**
+     * This method is invoked when camera preview has started. After this method is invoked
+     * the frames will start to be delivered to client via the onCameraFrame() callback.
+     *
+     * @param width  -  the width of the frames that will be delivered
+     * @param height - the height of the frames that will be delivered
+     */
+    @Override
+    public void onCameraViewStarted(int width, int height) {
+        
+    }
+
+    /**
+     * This method is invoked when camera preview has been stopped for some reason.
+     * No frames will be delivered via onCameraFrame() callback after this method is called.
+     */
+    @Override
+    public void onCameraViewStopped() {
+
+    }
+
+    /**
+     * This method is invoked when delivery of the frame needs to be done.
+     * The returned values - is a modified frame which needs to be displayed on the screen.
+     * TODO: pass the parameters specifying the format of the frame (BPP, YUV or RGB and etc)
+     *
+     * @param inputFrame
+     */
+    @Override
+    public Mat onCameraFrame(Mat inputFrame) {
+        return null;
     }
 }
